@@ -1,6 +1,7 @@
 ﻿using FlexBackend.Admin.Data;
 using FlexBackend.UIKit.Rcl;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
@@ -21,21 +22,13 @@ namespace FlexBackend.Admin
             builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-            builder.Services
-                .AddControllersWithViews()
-                // 如果先前「找不到版型」，再加這行，明確把 RCL 組件加入
-                .AddApplicationPart(typeof(UiKitRclMarker).Assembly);
+            builder.Services.AddControllersWithViews();
 
-            //builder.Services.AddControllersWithViews();
-
-            // 取得 RCL 主組件與 Views 組件
-            //var rclAssembly = typeof(UiKitRclMarker).Assembly;
-            //var rclViewsAssembly = Assembly.Load(new AssemblyName(rclAssembly.GetName().Name + ".Views"));
-
-            //builder.Services
-            //    .AddControllersWithViews()
-            //    .AddApplicationPart(rclAssembly)       // 程式碼（TagHelper/Controller 等）
-            //    .AddApplicationPart(rclViewsAssembly); // ⭐ 這一行很關鍵：把 .cshtml 的 compiled views 載進來
+            // 關鍵：把 RCL 的已編譯 Razor 視圖「手動」加入 MVC 的 Application Parts
+            builder.Services.Configure<ApplicationPartManager>(apm =>
+            {
+                apm.ApplicationParts.Add(new CompiledRazorAssemblyPart(typeof(UiKitRclMarker).Assembly));
+            });
 
             var app = builder.Build();
 
